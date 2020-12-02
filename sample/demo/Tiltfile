@@ -1,0 +1,2 @@
+docker_build('registry:5000/demo:testing-tag','.')
+k8s_yaml('sample_app.yaml')

@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: ConfigMap
+data:
+  person: elvis
+metadata:
+  name: my-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  labels:
+    app: demo
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      # nodeSelector:
+      #   name: elvis-veliz
+      # nodeName: kind-worker2
+      schedulerName: default-scheduler
+      tolerations:
+        #- key: "name"
+        #  operator: "Exists"
+        #  effect: "NoSchedule"
+        #- key: "name"
+        #  operator: "Equal"
+        #  value: "elvis"
+        #  effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+             - matchExpressions:
+               - key: kubernetes.io/hostname
+                 operator: In
+                 values:
+                   - kind-worker2
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1001
+      containers:
+        - name: demo
+          image: registry:5000/demo:testing-tag
+          securityContext:
+            allowPrivilegeEscalation: false
+          ports:
+            - containerPort: 8888
+          livenessProbe:
+            httpGet:
+              path: /dsfsdf/sdd/asd
+              port: 8888
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 200m
+              memory: 200Mi
+          env:
+            - name: DEMO_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: my-config
+                  key: person
+          volumeMounts:
+          - mountPath: /config/
+            name: demo-config-volume
+            readOnly: true
+      volumes:
+      - name: demo-config-volume
+        configMap:
+          name: my-config
+          items:
+          - key: person
+            path: person.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+  labels:
+    app: demo
+spec:
+  ports:
+  - port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: demo
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: demo
+          servicePort: 8888

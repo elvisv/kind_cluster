@@ -1,0 +1,27 @@
+# three node (two workers) cluster config
+kind: Cluster
+#apiVersion: kind.sigs.k8s.io/v1alpha3
+apiVersion: kind.x-k8s.io/v1alpha4
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."registry:5000"]
+    endpoint = ["http://registry:5000"]
+#kubeadmConfigPatches:
+#- |
+#  apiVersion: kubeadm.k8s.io/v1beta2
+#  kind: ClusterConfiguration
+#  metadata:
+#    name: config
+#  apiServer:
+#    extraArgs:
+#      enable-admission-plugins: NodeRestriction,PodSecurityPolicy
+nodes:
+- role: control-plane
+  extraMounts:
+  - hostPath: /dev
+    containerPath: /dev
+- role: worker
+- role: worker
+networking:
+  disableDefaultCNI: true # disable kindnet
+  podSubnet: 192.168.0.0/16 # set to Calico's default subnet

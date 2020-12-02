@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    run: test
+  name: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: test
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        run: test
+    spec:
+      containers:
+      - args:
+        - /bin/sh
+        - -c
+        - 'i=0; while true; do echo "$i: $(date)"; i=$((i+1)); sleep 1; done'
+        image: busybox
+        name: test
+        resources: {}
+status: {}
